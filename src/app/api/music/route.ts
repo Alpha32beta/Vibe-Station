@@ -25,11 +25,17 @@ export async function GET(request: Request) {
       url = `${DEEZER_BASE}/chart/0/playlists?limit=${limit}`;
     }
     
+    console.log('Fetching from:', url);
+    
     const response = await fetch(url);
     const data = await response.json();
     
+    console.log('Response status:', response.status);
+    console.log('Data:', data);
+    
     return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
+  } catch (error: any) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Failed to fetch', details: error?.message || 'Unknown error' }, { status: 500 });
   }
 }
