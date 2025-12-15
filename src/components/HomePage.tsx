@@ -1,20 +1,28 @@
 'use client'
 
-import { useFetchPopularAlbums, useFetchNigerianMusic, useFetchTrendingAlbums } from '@/hooks/useMusicAPI';
+import { useState, useEffect } from 'react';
+import { useFetchPopularAlbums, useFetchNigerianMusic, useFetchEditorialPlaylists } from '@/hooks/useMusicAPI';
 import Navbar from '@/components/Navbar';
 import AlbumItem from '@/components/AlbumItem';
 import { useMusic } from '@/context/MusicContext';
 import { useAuth } from '@/context/AuthContext';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 const HomePage = () => {
   const { albums: popular, loading: loading1 } = useFetchPopularAlbums(20);
   const { albums: nigerian, loading: loading2 } = useFetchNigerianMusic(20);
-  const { albums: trending, loading: loading3 } = useFetchTrendingAlbums(20);
+  const { albums: playlists, loading: loading3 } = useFetchEditorialPlaylists(20);
   const { likedSongsCount } = useMusic();
   const { user } = useAuth();
   const router = useRouter();
+  const [greeting, setGreeting] = useState('');
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('morning');
+    else if (hour < 18) setGreeting('afternoon');
+    else setGreeting('evening');
+  }, []);
 
   const quickAccess = [
     { 
@@ -38,7 +46,7 @@ const HomePage = () => {
       <div className="p-4 md:p-6 space-y-6 md:space-y-8">
         <section>
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6">
-            Good {getGreeting()}
+            Good {greeting || 'day'}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
             {quickAccess.map((item, i) => (
@@ -69,9 +77,9 @@ const HomePage = () => {
           </div>
         </section>
 
+        <AlbumSection title="Popular Playlists 🎧" albums={playlists} loading={loading3} />
         <AlbumSection title="Top 50 Global" albums={popular} loading={loading1} />
         <AlbumSection title="Top 50 Nigeria 🇳🇬" albums={nigerian} loading={loading2} />
-        <AlbumSection title="Trending Now" albums={trending} loading={loading3} />
       </div>
     </div>
   );
@@ -110,12 +118,5 @@ const AlbumSection = ({ title, albums, loading }: any) => {
     </section>
   );
 };
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 18) return 'afternoon';
-  return 'evening';
-}
 
 export default HomePage;
