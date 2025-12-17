@@ -34,11 +34,31 @@ const LikedSongsPage = () => {
 
   const isLikedPlaying = tracks.some((t: any) => t.trackId === currentTrack?.trackId) && isPlaying;
 
-  const handlePlayAll = () => {
+  const handlePlayAll = async () => {
     if (isLikedPlaying) {
       togglePlay();
     } else if (tracks.length > 0) {
-      playTrack(tracks[0], tracks, 0);
+      // Fetch fresh iTunes URL for first track
+      try {
+        const firstTrack = tracks[0];
+        const searchQuery = `${firstTrack.trackName} ${firstTrack.artistName}`.replace(/\s+/g, '+');
+        const response = await fetch(`https://itunes.apple.com/search?term=${searchQuery}&entity=song&limit=1`);
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+          const freshTrack = {
+            ...firstTrack,
+            previewUrl: data.results[0].previewUrl,
+          };
+          playTrack(freshTrack, tracks, 0);
+        } else {
+          // Fallback to stored URL
+          playTrack(firstTrack, tracks, 0);
+        }
+      } catch (error) {
+        console.error('Error fetching fresh track:', error);
+        playTrack(tracks[0], tracks, 0);
+      }
     }
   };
 
@@ -54,17 +74,17 @@ const LikedSongsPage = () => {
           </svg>
         </button>
 
-        <div className="flex gap-8 items-end mb-8">
-          <div className="w-60 h-60 bg-gradient-to-br from-purple-700 to-blue-300 rounded shadow-2xl flex items-center justify-center">
-            <svg className="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-start sm:items-end mb-6 sm:mb-8">
+          <div className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 bg-gradient-to-br from-purple-700 to-blue-300 rounded shadow-2xl flex items-center justify-center flex-shrink-0">
+            <svg className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <div className="flex-1 pb-4">
-            <p className="text-sm font-bold mb-2">PLAYLIST</p>
-            <h1 className="text-6xl font-bold mb-6 line-clamp-2">Liked Songs</h1>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-bold">{user.user_metadata?.full_name || user.email}</span>
+          <div className="flex-1 pb-0 sm:pb-4">
+            <p className="text-xs sm:text-sm font-bold mb-1 sm:mb-2">PLAYLIST</p>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 md:mb-6 line-clamp-2">Liked Songs</h1>
+            <div className="flex items-center gap-2 text-xs sm:text-sm">
+              <span className="font-bold truncate">{user.user_metadata?.full_name || user.email}</span>
               <span>•</span>
               <span>{likedSongs.length} songs</span>
             </div>
@@ -116,7 +136,28 @@ const LikedSongsPage = () => {
                 track={track}
                 index={index}
                 isPlaying={currentTrack?.trackId === track.trackId && isPlaying}
-                onClick={() => playTrack(track, tracks, index)}
+                onClick={async () => {
+                  // Fetch fresh iTunes URL before playing
+                  try {
+                    const searchQuery = `${track.trackName} ${track.artistName}`.replace(/\s+/g, '+');
+                    const response = await fetch(`https://itunes.apple.com/search?term=${searchQuery}&entity=song&limit=1`);
+                    const data = await response.json();
+                    
+                    if (data.results && data.results.length > 0) {
+                      const freshTrack = {
+                        ...track,
+                        previewUrl: data.results[0].previewUrl,
+                      };
+                      playTrack(freshTrack, tracks, index);
+                    } else {
+                      // Fallback to stored URL
+                      playTrack(track, tracks, index);
+                    }
+                  } catch (error) {
+                    console.error('Error fetching fresh track:', error);
+                    playTrack(track, tracks, index);
+                  }
+                }}
               />
             ))}
           </div>

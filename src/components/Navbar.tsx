@@ -34,22 +34,9 @@ const Navbar = () => {
 
   return (
     <nav className="flex items-center justify-between p-4 bg-spotify-dark sticky top-0 z-10">
-      <div className="flex items-center gap-4">
-        <button className="w-8 h-8 bg-black/70 rounded-full flex items-center justify-center hover:bg-black transition">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
-            <path fillRule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
-          </svg>
-        </button>
-        <button className="w-8 h-8 bg-black/70 rounded-full flex items-center justify-center hover:bg-black transition">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
-            <path fillRule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex-1 max-w-md mx-6 relative">
+      <div className="flex-1 max-w-2xl mx-auto relative">
         <div className="relative">
-          <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 16 16">
+          <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="currentColor" viewBox="0 0 16 16">
             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
           </svg>
           <input
@@ -58,7 +45,7 @@ const Navbar = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setShowResults(true)}
-            className="w-full bg-spotify-light-gray text-white placeholder-gray-400 rounded-full pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-white/20"
+            className="w-full bg-spotify-light-gray text-white placeholder-gray-400 rounded-full pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-white transition-all"
           />
         </div>
 
@@ -97,47 +84,50 @@ const Navbar = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 ml-4">
         {user ? (
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-110 transition"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer hover:scale-110 transition overflow-hidden border-2 border-gray-500 shadow-md"
             >
-              {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+              {user.user_metadata?.avatar_url ? (
+                <img 
+                  src={user.user_metadata.avatar_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
             </button>
 
             {showUserMenu && (
               <div className="absolute right-0 mt-2 w-56 bg-spotify-light-gray rounded-lg shadow-2xl overflow-hidden z-50">
                 <div className="p-4 border-b border-gray-700">
-                  <p className="text-white font-semibold truncate">{user.user_metadata?.full_name || 'User'}</p>
+                  <p className="text-white font-semibold truncate">{user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}</p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 </div>
                 <div className="py-2">
                   <Link
-                    href="/liked-songs"
+                    href="/profile"
                     className="block px-4 py-2 text-white hover:bg-spotify-gray transition"
                     onClick={() => setShowUserMenu(false)}
                   >
-                    Liked Songs
+                    Profile
                   </Link>
                   <Link
-                    href="/playlists"
+                    href="/change-password"
                     className="block px-4 py-2 text-white hover:bg-spotify-gray transition"
                     onClick={() => setShowUserMenu(false)}
                   >
-                    My Playlists
-                  </Link>
-                  <Link
-                    href="/history"
-                    className="block px-4 py-2 text-white hover:bg-spotify-gray transition"
-                    onClick={() => setShowUserMenu(false)}
-                  >
-                    Play History
+                    Change Password
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2 text-white hover:bg-spotify-gray transition"
+                    className="w-full text-left px-4 py-2 text-white hover:bg-spotify-gray transition border-t border-gray-700 mt-2"
                   >
                     Sign Out
                   </button>
@@ -146,17 +136,12 @@ const Navbar = () => {
             )}
           </div>
         ) : (
-          <>
-            <button className="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition">
-              Explore Premium
-            </button>
-            <Link
-              href="/login"
-              className="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition"
-            >
-              Log in
-            </Link>
-          </>
+          <Link
+            href="/login"
+            className="bg-white text-black px-6 py-2 rounded-full text-sm font-bold hover:scale-105 transition"
+          >
+            Log in
+          </Link>
         )}
       </div>
 

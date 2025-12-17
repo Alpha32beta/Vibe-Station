@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 const albumsCache: { [key: string]: { data: any, timestamp: number } } = {};
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -165,31 +166,17 @@ export function useFetchEditorialPlaylists(limit = 20) {
   }, [limit]);
 
   async function fetchPlaylists() {
-    const cacheKey = 'editorial-playlists';
-    const cached = albumsCache[cacheKey];
-    
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      setAlbums(cached.data);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const { data, error } = await supabase
+        .from('editorial_playlists')
+        .select('*')
+        .limit(limit);
       
-      const response = await fetch(`/api/music?type=editorial-playlists&limit=${limit}`, {
-        signal: controller.signal
-      });
+      if (error) throw error;
       
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) throw new Error('Failed to fetch playlists');
-      
-      const data = await response.json();
-      const playlistData = (data.data || []).map((playlist: any) => ({
+      const playlistData = (data || []).map((playlist: any) => ({
         collectionId: playlist.id,
         collectionName: playlist.title,
         artistName: `${playlist.nb_tracks} tracks`,
@@ -197,7 +184,6 @@ export function useFetchEditorialPlaylists(limit = 20) {
         releaseDate: playlist.creation_date,
       }));
       
-      albumsCache[cacheKey] = { data: playlistData, timestamp: Date.now() };
       setAlbums(playlistData);
       setError(null);
     } catch (err: any) {

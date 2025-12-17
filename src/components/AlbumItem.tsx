@@ -4,14 +4,74 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
 
+interface Track {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  previewUrl: string;
+  artworkUrl100: string;
+  collectionName: string;
+  trackTimeMillis: number;
+}
+
 const AlbumItem = ({ album }: any) => {
   const [isHovered, setIsHovered] = useState(false);
-  const { playAlbumPreview } = usePlayer();
+  const [isLoading, setIsLoading] = useState(false);
+  const { playTrack } = usePlayer();
 
-  const handlePlay = (e: React.MouseEvent) => {
+  const handlePlay = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    playAlbumPreview(album.collectionId);
+    
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    
+    try {
+      console.log('Fetching album tracks for ID:', album.collectionId);
+      
+      const response = await fetch(`/api/music?type=album&query=${album.collectionId}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Album data received:', data);
+      
+      if (data && data.tracks && data.tracks.data && data.tracks.data.length > 0) {
+        const tracks = data.tracks.data
+          .map((track: any) => ({
+            trackId: track.id,
+            trackName: track.title,
+            artistName: track.artist?.name || album.artistName,
+            artworkUrl100: track.album?.cover_medium || album.artworkUrl100,
+            previewUrl: track.preview || '',
+            trackTimeMillis: track.duration ? track.duration * 1000 : 30000,
+            collectionName: album.collectionName,
+          }))
+          .filter((track: Track) => track.previewUrl !== ''); 
+        
+        console.log('Processed tracks:', tracks);
+        console.log('Track preview URLs:', tracks.map((t: Track) => t.previewUrl));
+        
+        if (tracks.length > 0) {
+          console.log('Playing track:', tracks[0].trackName);
+          playTrack(tracks[0], tracks, 0);
+        } else {
+          console.warn('No tracks with preview URLs found in this album');
+          alert('No preview available for this album');
+        }
+      } else {
+        console.warn('No tracks found in album data:', data);
+        alert('Could not load tracks for this album');
+      }
+    } catch (error) {
+      console.error('Error fetching album tracks:', error);
+      alert('Error loading album tracks. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -26,17 +86,30 @@ const AlbumItem = ({ album }: any) => {
             src={album.artworkUrl100?.replace('100x100', '300x300') || '/placeholder.png'}
             alt={album.collectionName}
             className="w-full aspect-square object-cover rounded-md shadow-lg"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/placeholder.png';
+            }}
           />
           <button
             onClick={handlePlay}
-            className={`absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl transition-all hover:scale-110 hover:bg-green-400 ${
+            disabled={isLoading}
+            className={`absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl transition-all hover:scale-110 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed ${
               isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}
+            title={isLoading ? 'Loading...' : 'Play'}
           >
-            <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-              <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
-            </svg>
+            {isLoading ? (
+              <svg className="w-6 h-6 text-black animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
+              </svg>
+            )}
           </button>
         </div>
         <h3 className="font-bold text-white truncate mb-2 group-hover:underline">

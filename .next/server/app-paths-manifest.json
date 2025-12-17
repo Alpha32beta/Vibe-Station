@@ -1,0 +1,9 @@
+{
+  "/api/music/route": "app/api/music/route.js",
+  "/signup/page": "app/signup/page.js",
+  "/page": "app/page.js",
+  "/playlists/page": "app/playlists/page.js",
+  "/album/[id]/page": "app/album/[id]/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/playlist/[id]/page": "app/playlist/[id]/page.js"
+}

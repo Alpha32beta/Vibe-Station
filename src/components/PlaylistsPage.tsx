@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useMusic } from '@/context/MusicContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
 const PlaylistsPage = () => {
@@ -19,14 +18,15 @@ const PlaylistsPage = () => {
   useEffect(() => {
     if (!user) {
       router.push('/login');
-    }
-  }, [user, router]);
-
-  useEffect(() => {
-    if (user) {
+    } else {
+      console.log('User logged in, fetching playlists...');
       refreshData();
     }
   }, [user]);
+
+  useEffect(() => {
+    console.log('Playlists:', playlists);
+  }, [playlists]);
 
   if (!user) {
     return null;
@@ -37,11 +37,15 @@ const PlaylistsPage = () => {
     if (!playlistName.trim()) return;
 
     setCreating(true);
-    await createPlaylist(playlistName, playlistDescription);
+    console.log('Creating playlist:', playlistName);
+    const result = await createPlaylist(playlistName, playlistDescription);
+    console.log('Create result:', result);
     setCreating(false);
     setPlaylistName('');
     setPlaylistDescription('');
     setShowCreateModal(false);
+    
+    await refreshData();
   };
 
   const handleDeletePlaylist = async (playlistId: string, playlistName: string) => {
@@ -52,8 +56,6 @@ const PlaylistsPage = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-spotify-gray to-spotify-black">
-      <Navbar />
-      
       <div className="p-4 md:p-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white">Your Playlists</h1>
@@ -84,39 +86,34 @@ const PlaylistsPage = () => {
             {playlists.map((playlist) => (
               <div
                 key={playlist.id}
+                onClick={() => {
+                  console.log('Playlist clicked:', playlist.id, playlist.name);
+                  router.push(`/playlist/${playlist.id}`);
+                }}
                 className="bg-spotify-gray rounded-lg p-4 hover:bg-spotify-light-gray transition cursor-pointer group relative"
               >
-                <Link href={`/playlist/${playlist.id}`}>
-                  <div className="relative mb-4">
-                    <div className="w-full aspect-square bg-gradient-to-br from-purple-700 to-blue-500 rounded-md shadow-lg flex items-center justify-center">
-                      <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
-                      </svg>
-                    </div>
-                    <button
-                      className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-xl transition-all hover:scale-110 hover:bg-green-400 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
-                    >
-                      <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                        <path d="M6.271 5.055a.5.5 0 0 1 .52.038l3.5 2.5a.5.5 0 0 1 0 .814l-3.5 2.5A.5.5 0 0 1 6 10.5v-5a.5.5 0 0 1 .271-.445z"/>
-                      </svg>
-                    </button>
+                <div className="relative mb-4">
+                  <div className="w-full aspect-square bg-gradient-to-br from-purple-700 to-blue-500 rounded-md shadow-lg flex items-center justify-center">
+                    <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
+                    </svg>
                   </div>
-                  <h3 className="font-bold text-white truncate mb-2 group-hover:underline">
-                    {playlist.name}
-                  </h3>
-                  {playlist.description && (
-                    <p className="text-sm text-gray-400 truncate mb-2">
-                      {playlist.description}
-                    </p>
-                  )}
-                </Link>
+                </div>
+                <h3 className="font-bold text-white truncate mb-2 group-hover:underline">
+                  {playlist.name}
+                </h3>
+                {playlist.description && (
+                  <p className="text-sm text-gray-400 truncate mb-2">
+                    {playlist.description}
+                  </p>
+                )}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     handleDeletePlaylist(playlist.id, playlist.name);
                   }}
-                  className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-red-500"
+                  className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-red-500 z-10"
                 >
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>

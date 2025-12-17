@@ -45,13 +45,18 @@ const SignupPage = () => {
     const { error } = await signUp(email, password, fullName);
 
     if (error) {
-      setError(error.message);
+      if (error.message.includes('already registered')) {
+        setError('This email is already registered. Please try logging in instead.');
+        setTimeout(() => {
+          router.push('/login');
+        }, 3000);
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
     } else {
       setSuccess(true);
-      setTimeout(() => {
-        router.push('/');
-      }, 2000);
+      setLoading(false);
     }
   };
 
@@ -71,93 +76,123 @@ const SignupPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-black rounded-lg p-8 space-y-6">
-          {error && (
+          {error && !success && (
             <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-500/10 border border-green-500 text-green-500 px-4 py-3 rounded">
-              Account created successfully! Redirecting...
+            <div className="bg-green-500/10 border border-green-500 rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                </svg>
+                <div className="flex-1">
+                  <h3 className="text-green-500 font-bold text-lg mb-2">Account Created Successfully!</h3>
+                  <p className="text-green-400 text-sm mb-3">
+                    We've sent a verification email to <strong>{email}</strong>
+                  </p>
+                  <div className="bg-green-500/20 rounded p-3 mb-4">
+                    <p className="text-green-300 text-xs">
+                      📧 <strong>Next Step:</strong> Check your email inbox and click the verification link to activate your account.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/login')}
+                    className="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-2 px-4 rounded-full transition text-sm"
+                  >
+                    Go to Login
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
-          <div>
-            <label className="block text-white font-semibold mb-2">Full Name</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Full Name"
-              required
-              className="w-full px-4 py-3 bg-spotify-gray text-white rounded border border-gray-700 focus:border-white focus:outline-none"
-            />
-          </div>
+          {!success && (
+            <>
+              <div>
+                <label className="block text-white font-semibold mb-2">Full Name</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-spotify-light-gray text-white rounded border border-gray-700 focus:border-white focus:outline-none"
+                  placeholder="Enter your full name"
+                />
+              </div>
 
-          <div>
-            <label className="block text-white font-semibold mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              required
-              className="w-full px-4 py-3 bg-spotify-gray text-white rounded border border-gray-700 focus:border-white focus:outline-none"
-            />
-          </div>
+              <div>
+                <label className="block text-white font-semibold mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 bg-spotify-light-gray text-white rounded border border-gray-700 focus:border-white focus:outline-none"
+                  placeholder="name@domain.com"
+                />
+              </div>
 
-          <div>
-            <label className="block text-white font-semibold mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (min 6 characters)"
-              required
-              className="w-full px-4 py-3 bg-spotify-gray text-white rounded border border-gray-700 focus:border-white focus:outline-none"
-            />
-            {password.length > 0 && (
-              <div className="mt-2">
-                <div className="flex gap-1 mb-1">
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-1 flex-1 rounded ${
-                        level <= passwordStrength.strength
-                          ? passwordStrength.color
-                          : 'bg-gray-700'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className={`text-xs ${passwordStrength.color.replace('bg-', 'text-')}`}>
-                  Password strength: {passwordStrength.text}
-                </p>
-                {password.length < 6 && (
-                  <p className="text-xs text-red-400 mt-1">Must be at least 6 characters</p>
+              <div>
+                <label className="block text-white font-semibold mb-2">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full px-4 py-3 bg-spotify-light-gray text-white rounded border border-gray-700 focus:border-white focus:outline-none"
+                  placeholder="Create a password"
+                />
+                {password && (
+                  <div className="mt-2">
+                    <div className="flex gap-1 mb-1">
+                      {[...Array(4)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-1 flex-1 rounded ${
+                            i < passwordStrength.strength ? passwordStrength.color : 'bg-gray-700'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Password strength: <span className={`font-semibold ${passwordStrength.color.replace('bg-', 'text-')}`}>{passwordStrength.text}</span>
+                    </p>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-500 text-black font-bold py-3 rounded-full hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-green-500 hover:bg-green-400 disabled:bg-gray-700 disabled:cursor-not-allowed text-black font-bold py-3 rounded-full transition"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
+                    Creating account...
+                  </span>
+                ) : (
+                  'Sign Up'
+                )}
+              </button>
+            </>
+          )}
 
-        <div className="text-center mt-6">
-          <p className="text-gray-400">
+          <div className="text-center text-gray-400 text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-white underline hover:text-green-500">
+            <Link href="/login" className="text-white hover:text-green-500 font-semibold">
               Log in here
             </Link>
-          </p>
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   );

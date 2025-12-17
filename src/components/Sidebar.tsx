@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useMusic } from '@/context/MusicContext';
 import { useRouter } from 'next/navigation';
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
+  const { playlists } = useMusic();
   const router = useRouter();
 
   const handleCreatePlaylist = () => {
@@ -80,27 +82,43 @@ const Sidebar = () => {
             </button>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-spotify-light-gray rounded-lg p-4">
-              <h3 className="font-bold text-white mb-2 text-sm">Create your first playlist</h3>
-              <p className="text-xs text-gray-400 mb-4">
-                {user ? "It's easy, we'll help you" : "Log in to save playlists"}
-              </p>
-              <button 
-                onClick={handleCreatePlaylist}
-                className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold hover:scale-105 transition"
-              >
-                {user ? 'Create playlist' : 'Log in'}
-              </button>
-            </div>
-
-            <div className="bg-spotify-light-gray rounded-lg p-4">
-              <h3 className="font-bold text-white mb-2 text-sm">Let's find some podcasts</h3>
-              <p className="text-xs text-gray-400 mb-4">We'll keep you updated</p>
-              <button className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold hover:scale-105 transition">
-                Browse podcasts
-              </button>
-            </div>
+          <div className="space-y-2">
+            {user && playlists.length > 0 ? (
+              <>
+                {playlists.map((playlist) => (
+                  <Link
+                    key={playlist.id}
+                    href={`/playlist/${playlist.id}`}
+                    className="flex items-center gap-3 p-2 rounded hover:bg-spotify-light-gray transition group"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-700 to-blue-500 rounded flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-white truncate group-hover:underline">
+                        {playlist.name}
+                      </p>
+                      <p className="text-xs text-gray-400">Playlist</p>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            ) : (
+              <div className="bg-spotify-light-gray rounded-lg p-4">
+                <h3 className="font-bold text-white mb-2 text-sm">Create your first playlist</h3>
+                <p className="text-xs text-gray-400 mb-4">
+                  {user ? "It's easy, we'll help you" : "Log in to save playlists"}
+                </p>
+                <button 
+                  onClick={handleCreatePlaylist}
+                  className="bg-white text-black px-4 py-2 rounded-full text-xs font-bold hover:scale-105 transition"
+                >
+                  {user ? 'Create playlist' : 'Log in'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>

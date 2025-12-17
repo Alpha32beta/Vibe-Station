@@ -28,6 +28,7 @@ interface MusicContextType {
   playlists: Playlist[];
   playHistory: any[];
   likedSongsCount: number;
+  recentlyPlayedCount: number;
   isTrackLiked: (trackId: string) => boolean;
   toggleLike: (track: Track) => Promise<void>;
   createPlaylist: (name: string, description?: string) => Promise<{ data: any; error: any }>;
@@ -267,6 +268,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         playlists,
         playHistory,
         likedSongsCount: likedSongs.length,
+        recentlyPlayedCount: playHistory.length,
         isTrackLiked,
         toggleLike,
         createPlaylist,

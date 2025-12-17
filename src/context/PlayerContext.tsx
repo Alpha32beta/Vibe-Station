@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface Track {
   trackId: number;
@@ -48,21 +49,67 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [isRepeat, setIsRepeat] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioInitializedRef = useRef(false);
 
+  // Initialize audio element on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio();
-      audioRef.current.volume = volume;
+    if (typeof window !== 'undefined' && !audioInitializedRef.current) {
+      // Create or get existing audio element
+      let audioEl = document.getElementById('global-audio-player') as HTMLAudioElement;
+      
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = 'global-audio-player';
+        audioEl.style.display = 'none';
+        document.body.appendChild(audioEl);
+      }
+      
+      audioRef.current = audioEl;
+      audioEl.volume = volume;
+      audioInitializedRef.current = true;
+      
+      // Set up event listeners
+      const handleTimeUpdate = () => {
+        if (audioRef.current) {
+          setCurrentTime(audioRef.current.currentTime);
+        }
+      };
+      
+      const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+          setDuration(audioRef.current.duration);
+        }
+      };
+      
+      const handleEnded = () => {
+        if (isRepeat && audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+        } else if (playlist.length > 0) {
+          handleNextTrack();
+        } else {
+          setIsPlaying(false);
+        }
+      };
+      
+      audioEl.addEventListener('timeupdate', handleTimeUpdate);
+      audioEl.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audioEl.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audioEl.removeEventListener('timeupdate', handleTimeUpdate);
+        audioEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audioEl.removeEventListener('ended', handleEnded);
+      };
     }
   }, []);
 
+  // Update event listeners when dependencies change
   useEffect(() => {
     if (!audioRef.current) return;
-
+    
     const audio = audioRef.current;
-
-    const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setDuration(audio.duration);
+    
     const handleEnded = () => {
       if (isRepeat) {
         audio.currentTime = 0;
@@ -73,17 +120,32 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         setIsPlaying(false);
       }
     };
-
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('loadedmetadata', updateDuration);
+    
     audio.addEventListener('ended', handleEnded);
-
+    
     return () => {
-      audio.removeEventListener('timeupdate', updateTime);
-      audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
   }, [isRepeat, playlist, currentIndex, isShuffle]);
+
+  const saveToPlayHistory = async (track: Track) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      await supabase.from('play_history').insert({
+        user_id: user.id,
+        track_id: track.trackId.toString(),
+        track_name: track.trackName,
+        artist_name: track.artistName,
+        artwork_url: track.artworkUrl100,
+        preview_url: track.previewUrl,
+      });
+    } catch (error) {
+      console.error('Error saving to play history:', error);
+    }
+  };
 
   const handleNextTrack = () => {
     if (playlist.length === 0) return;
@@ -103,19 +165,39 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     
     if (audioRef.current && nextTrack.previewUrl) {
       audioRef.current.src = nextTrack.previewUrl;
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(err => console.error('Play error:', err));
+      audioRef.current.load(); // Important for Safari
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            saveToPlayHistory(nextTrack);
+          })
+          .catch(err => {
+            console.error('Play error in next track:', err);
+            setIsPlaying(false);
+          });
+      }
     }
   };
 
   const playAlbumPreview = async (albumId: string) => {
     try {
-      const response = await fetch(`https://itunes.apple.com/lookup?id=${albumId}&entity=song`);
+      const response = await fetch(`/api/music?type=album&query=${albumId}`);
       const data = await response.json();
       
-      if (data.results && data.results.length > 1) {
-        const tracks = data.results.slice(1);
+      if (data && data.tracks && data.tracks.data.length > 0) {
+        const tracks = data.tracks.data.map((track: any) => ({
+          trackId: track.id,
+          trackName: track.title,
+          artistName: track.artist.name,
+          artworkUrl100: track.album?.cover_medium || data.cover_medium,
+          previewUrl: track.preview,
+          trackTimeMillis: track.duration * 1000,
+          collectionName: data.title,
+        }));
+        
         const validTracks = tracks.filter((t: any) => t.previewUrl);
         
         if (validTracks.length > 0) {
@@ -128,7 +210,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   };
 
   const playTrack = (track: Track, newPlaylist?: Track[], index?: number) => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      console.error('Audio element not initialized');
+      return;
+    }
+
+    console.log('Playing track:', track.trackName);
+    console.log('Preview URL:', track.previewUrl);
+    
+    if (!track.previewUrl) {
+      console.error('No preview URL for track:', track.trackName);
+      return;
+    }
 
     setCurrentTrack(track);
     
@@ -137,24 +230,61 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrentIndex(index ?? 0);
     }
 
-    if (track.previewUrl) {
-      audioRef.current.src = track.previewUrl;
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(err => console.error('Play error:', err));
+    // Pause current audio
+    audioRef.current.pause();
+    
+    // Set new source
+    audioRef.current.src = track.previewUrl;
+    audioRef.current.load(); // Important for Safari
+    
+    // Play with user interaction
+    const playPromise = audioRef.current.play();
+    
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setIsPlaying(true);
+          saveToPlayHistory(track);
+        })
+        .catch(err => {
+          console.error('Autoplay prevented:', err);
+          // Set playing state to false to show play button
+          setIsPlaying(false);
+          
+          // For debugging: log the specific error
+          if (err.name === 'NotAllowedError') {
+            console.log('Browser requires user interaction first');
+          }
+        });
     }
   };
 
   const togglePlay = () => {
-    if (!audioRef.current || !currentTrack) return;
+    if (!audioRef.current || !currentTrack) {
+      console.error('No audio element or current track');
+      return;
+    }
     
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(err => console.error('Play error:', err));
+      const playPromise = audioRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(err => {
+            console.error('Play error in toggle:', err);
+            // If autoplay is blocked, try loading and playing again
+            if (err.name === 'NotAllowedError') {
+              audioRef.current?.load();
+              audioRef.current?.play()
+                .then(() => setIsPlaying(true))
+                .catch(e => console.error('Second play attempt failed:', e));
+            }
+          });
+      }
     }
   };
 
@@ -177,6 +307,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const seekTo = (time: number) => {
     if (audioRef.current) {
       audioRef.current.currentTime = time;
+      setCurrentTime(time);
     }
   };
 
