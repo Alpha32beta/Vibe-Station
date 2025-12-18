@@ -14,40 +14,49 @@ function ConfirmEmailContent() {
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       try {
-        // Get the token from URL
+        console.log('=== EMAIL CONFIRMATION DEBUG ===');
+        console.log('Full URL:', window.location.href);
+        
         const token_hash = searchParams.get('token_hash');
         const type = searchParams.get('type');
+        
+        console.log('token_hash:', token_hash);
+        console.log('type:', type);
+        console.log('token_hash exists?', !!token_hash);
+        console.log('type is email?', type === 'email');
 
         if (!token_hash || type !== 'email') {
+          console.log('FAILED: Missing or invalid parameters');
           setStatus('error');
           setMessage('Invalid confirmation link. Please check your email and try again.');
           return;
         }
 
-        // Verify the email with Supabase
-        const { error } = await supabase.auth.verifyOtp({
+        console.log('Calling Supabase verifyOtp...');
+        const { error, data } = await supabase.auth.verifyOtp({
           token_hash,
           type: 'email',
         });
 
+        console.log('Supabase response:', { error, data });
+
         if (error) {
-          console.error('Email confirmation error:', error);
+          console.error('FAILED: Supabase error:', error);
           setStatus('error');
           setMessage(error.message || 'Email confirmation failed. Please try again.');
           return;
         }
 
-        // Success!
+        console.log('SUCCESS: Email verified!');
         setStatus('success');
         setMessage('Your email has been verified successfully!');
 
-        // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/login');
         }, 3000);
 
       } catch (error: any) {
-        console.error('Confirmation error:', error);
+        console.error('FAILED: Caught exception:', error);
         setStatus('error');
         setMessage('Something went wrong. Please try again.');
       }
@@ -60,7 +69,6 @@ function ConfirmEmailContent() {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
@@ -72,10 +80,8 @@ function ConfirmEmailContent() {
           </div>
         </div>
 
-        {/* Status Card */}
         <div className="bg-neutral-900 rounded-lg p-8 shadow-2xl">
           
-          {/* Loading State */}
           {status === 'loading' && (
             <div className="text-center">
               <Loader2 className="w-16 h-16 text-purple-500 mx-auto mb-4 animate-spin" />
@@ -84,7 +90,6 @@ function ConfirmEmailContent() {
             </div>
           )}
 
-          {/* Success State */}
           {status === 'success' && (
             <div className="text-center">
               <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -104,7 +109,6 @@ function ConfirmEmailContent() {
             </div>
           )}
 
-          {/* Error State */}
           {status === 'error' && (
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
@@ -134,11 +138,10 @@ function ConfirmEmailContent() {
 
         </div>
 
-        {/* Help Text */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
             Need help?{' '}
-            <a href="mailto:support@vibestation.com" className="text-green-500 hover:underline">
+            <a href="mailto:itulegodstime3546@gmail.com" className="text-green-500 hover:underline">
               Contact Support
             </a>
           </p>
