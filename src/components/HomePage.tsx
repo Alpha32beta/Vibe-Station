@@ -90,7 +90,6 @@ const HomePage = () => {
 
         <AlbumSection title="Top 50 Global" albums={popular} loading={loading1} />
         <AlbumSection title="Top 50 Nigeria 🇳🇬" albums={nigerian} loading={loading2} />
-        <AlbumSection title="Popular Playlists 🎧" albums={editorialPlaylists} loading={loading3} />
       </div>
     </div>
   );
