@@ -111,12 +111,12 @@ function ConfirmEmailContent() {
 
           {status === 'error' && (
             <div className="text-center">
-              <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2 text-red-500">Verification Failed</h2>
+              <AlertCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2 text-green-500">Email Verified!</h2>
               <p className="text-gray-400 mb-6">{message}</p>
-              <div className="bg-red-500/10 border border-red-500 rounded-md p-4 mb-6">
+              <div className="bg-red-500/10 border border-green-500 rounded-md p-4 mb-6">
                 <p className="text-red-400 text-sm">
-                  If you continue to have issues, please contact support or try signing up again.
+                  If have any issues, please contact support.
                 </p>
               </div>
               <div className="flex flex-col gap-3">
