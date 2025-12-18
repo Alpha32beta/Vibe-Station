@@ -51,10 +51,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioInitializedRef = useRef(false);
 
-  // Initialize audio element on mount
+  
   useEffect(() => {
     if (typeof window !== 'undefined' && !audioInitializedRef.current) {
-      // Create or get existing audio element
+      
       let audioEl = document.getElementById('global-audio-player') as HTMLAudioElement;
       
       if (!audioEl) {

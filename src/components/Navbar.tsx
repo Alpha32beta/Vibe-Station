@@ -27,9 +27,14 @@ const Navbar = () => {
   }, [searchQuery]);
 
   const handleSignOut = async () => {
-    await signOut();
-    setShowUserMenu(false);
-    router.push('/');
+    try {
+      await signOut();
+      setShowUserMenu(false);
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   return (
@@ -50,7 +55,7 @@ const Navbar = () => {
         </div>
 
         {showResults && searchQuery && (
-          <div className="absolute top-full mt-2 w-full bg-spotify-light-gray rounded-lg shadow-2xl max-h-96 overflow-y-auto">
+          <div className="absolute top-full mt-2 w-full bg-spotify-light-gray rounded-lg shadow-2xl max-h-96 overflow-y-auto z-50">
             {loading ? (
               <div className="p-8 text-center text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
@@ -105,7 +110,7 @@ const Navbar = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-spotify-light-gray rounded-lg shadow-2xl overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-spotify-light-gray rounded-lg shadow-2xl overflow-hidden z-[100]">
                 <div className="p-4 border-b border-gray-700">
                   <p className="text-white font-semibold truncate">{user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}</p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
@@ -145,8 +150,8 @@ const Navbar = () => {
         )}
       </div>
 
-      {showResults && <div className="fixed inset-0 z-[-1]" onClick={() => setShowResults(false)} />}
-      {showUserMenu && <div className="fixed inset-0 z-[-1]" onClick={() => setShowUserMenu(false)} />}
+      {showResults && <div className="fixed inset-0 z-40" onClick={() => setShowResults(false)} />}
+      {showUserMenu && <div className="fixed inset-0 z-[99]" onClick={() => setShowUserMenu(false)} />}
     </nav>
   );
 };

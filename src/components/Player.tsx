@@ -49,7 +49,7 @@ const Player = () => {
   const trackLiked = currentTrack ? isTrackLiked(currentTrack.trackId.toString()) : false;
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 h-20 md:h-24 bg-black border-t border-gray-800 px-2 md:px-4 flex items-center justify-between gap-2 z-50">
+    <footer className=" fixed bottom-0 left-0 right-0 h-20 md:h-24 bg-black border-t border-gray-800 px-2 md:px-4 flex items-center justify-between gap-2 z-50">
       <div className="flex items-center gap-2 md:gap-4 w-[25%] sm:w-[30%] min-w-0">
         {currentTrack ? (
           <>

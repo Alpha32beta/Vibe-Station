@@ -52,7 +52,7 @@ const HomePage = () => {
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-spotify-gray to-spotify-black">
       <Navbar />
       
-      <div className="p-4 md:p-6 space-y-6 md:space-y-8">
+      <div className="p-4 space-y-6 md:space-y-8 pb-20 md:pb-24">
         <section>
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 md:mb-6">
             Good {greeting || 'day'}
