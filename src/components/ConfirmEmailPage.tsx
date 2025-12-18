@@ -149,7 +149,7 @@ function ConfirmEmailContent() {
   );
 }
 
-export default function ConfirmEmail() {
+export default function ConfirmEmailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
