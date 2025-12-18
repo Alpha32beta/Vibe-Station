@@ -24,10 +24,10 @@ const Sidebar = () => {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-black rounded-full flex items-center justify-center hover:bg-gray-900 transition"
+        className="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition shadow-lg"
       >
-        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
 
@@ -74,7 +74,7 @@ const Sidebar = () => {
             </div>
             <button 
               onClick={handleCreatePlaylist}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white transition"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
