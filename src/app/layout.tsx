@@ -1,7 +1,8 @@
 import { AuthProvider } from '@/context/AuthContext';
 import { MusicProvider } from '@/context/MusicContext';
 import { PlayerProvider } from '@/context/PlayerContext';
-import './globals.css'; // or whatever your CSS import is
+import AutoRefresh from '@/components/AutoRefresh';
+import './globals.css';
 
 export default function RootLayout({
   children,
@@ -14,6 +15,7 @@ export default function RootLayout({
         <AuthProvider>
           <MusicProvider>
             <PlayerProvider>
+              <AutoRefresh />
               {children}
             </PlayerProvider>
           </MusicProvider>
