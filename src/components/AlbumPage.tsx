@@ -5,6 +5,7 @@ import { useFetchAlbumDetails } from '@/hooks/useMusicAPI';
 import { usePlayer } from '@/context/PlayerContext';
 import { useRouter } from 'next/navigation';
 import TrackMenu from '@/components/TrackMenu';
+import Navbar from './Navbar';
 
 const AlbumPage = ({ albumId }: { albumId: string }) => {
   const { album, tracks, loading, error } = useFetchAlbumDetails(albumId);
@@ -59,6 +60,7 @@ const AlbumPage = ({ albumId }: { albumId: string }) => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-purple-900/40 to-spotify-black">
+      <Navbar />
       <div className="p-4 sm:p-6 md:p-8">
         <button
           onClick={() => router.back()}

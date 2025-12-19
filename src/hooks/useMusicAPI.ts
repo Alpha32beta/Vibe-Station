@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 
 const albumsCache: { [key: string]: { data: any, timestamp: number } } = {};
 const CACHE_DURATION = 5 * 60 * 1000;
 
-export function useFetchPopularAlbums(limit = 20) {
+export function useFetchPopularAlbums(limit = 10) {
   const [albums, setAlbums] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,23 +26,16 @@ export function useFetchPopularAlbums(limit = 20) {
 
     try {
       setLoading(true);
-      const artists = ['Drake', 'Taylor Swift', 'The Weeknd', 'Ed Sheeran', 'Ariana Grande', 'Post Malone'];
+      // Reduced from 6 artists to 4 for faster loading
+      const artists = ['Drake', 'Taylor Swift', 'The Weeknd', 'Ed Sheeran'];
       
       const promises = artists.map(artist =>
-        fetch(`/api/music?type=search-album&query=${encodeURIComponent(artist)}&limit=4`)
+        fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&entity=album&limit=3`)
           .then(res => res.json())
       );
       
       const results = await Promise.all(promises);
-      const allAlbums = results.flatMap(data => 
-        (data.data || []).map((album: any) => ({
-          collectionId: album.id,
-          collectionName: album.title,
-          artistName: album.artist.name,
-          artworkUrl100: album.cover_medium,
-          releaseDate: album.release_date,
-        }))
-      );
+      const allAlbums = results.flatMap(data => data.results || []);
       const slicedAlbums = allAlbums.slice(0, limit);
       
       albumsCache[cacheKey] = { data: slicedAlbums, timestamp: Date.now() };
@@ -59,7 +51,7 @@ export function useFetchPopularAlbums(limit = 20) {
   return { albums, loading, error };
 }
 
-export function useFetchNigerianMusic(limit = 20) {
+export function useFetchNigerianMusic(limit = 10) {
   const [albums, setAlbums] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,23 +72,16 @@ export function useFetchNigerianMusic(limit = 20) {
 
     try {
       setLoading(true);
-      const artists = ['Burna Boy', 'Wizkid', 'Davido', 'Rema', 'Ayra Starr', 'Asake', 'Tems', 'Omah Lay'];
+      // Reduced from 8 artists to 5 for faster loading
+      const artists = ['Burna Boy', 'Wizkid', 'Davido', 'Rema', 'Asake'];
       
       const promises = artists.map(artist =>
-        fetch(`/api/music?type=search-album&query=${encodeURIComponent(artist)}&limit=3`)
+        fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&entity=album&limit=2`)
           .then(res => res.json())
       );
       
       const results = await Promise.all(promises);
-      const allAlbums = results.flatMap(data => 
-        (data.data || []).map((album: any) => ({
-          collectionId: album.id,
-          collectionName: album.title,
-          artistName: album.artist.name,
-          artworkUrl100: album.cover_medium,
-          releaseDate: album.release_date,
-        }))
-      );
+      const allAlbums = results.flatMap(data => data.results || []);
       const slicedAlbums = allAlbums.slice(0, limit);
       
       albumsCache[cacheKey] = { data: slicedAlbums, timestamp: Date.now() };
@@ -112,7 +97,7 @@ export function useFetchNigerianMusic(limit = 20) {
   return { albums, loading, error };
 }
 
-export function useFetchTrendingAlbums(limit = 20) {
+export function useFetchTrendingAlbums(limit = 10) {
   const [albums, setAlbums] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,18 +118,11 @@ export function useFetchTrendingAlbums(limit = 20) {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/music?type=chart&limit=${limit}`);
+      const response = await fetch(`https://itunes.apple.com/search?term=pop&entity=album&limit=${limit}`);
       const data = await response.json();
-      const albumData = (data.data || []).map((album: any) => ({
-        collectionId: album.id,
-        collectionName: album.title,
-        artistName: album.artist.name,
-        artworkUrl100: album.cover_medium,
-        releaseDate: album.release_date,
-      }));
       
-      albumsCache[cacheKey] = { data: albumData, timestamp: Date.now() };
-      setAlbums(albumData);
+      albumsCache[cacheKey] = { data: data.results || [], timestamp: Date.now() };
+      setAlbums(data.results || []);
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -156,7 +134,7 @@ export function useFetchTrendingAlbums(limit = 20) {
   return { albums, loading, error };
 }
 
-export function useFetchEditorialPlaylists(limit = 20) {
+export function useFetchEditorialPlaylists(limit = 10) {
   const [albums, setAlbums] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,30 +144,25 @@ export function useFetchEditorialPlaylists(limit = 20) {
   }, [limit]);
 
   async function fetchPlaylists() {
+    const cacheKey = 'editorial-playlists';
+    const cached = albumsCache[cacheKey];
+    
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setAlbums(cached.data);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
+      const response = await fetch(`https://itunes.apple.com/search?term=hits&entity=album&limit=${limit}`);
+      const data = await response.json();
       
-      const { data, error } = await supabase
-        .from('editorial_playlists')
-        .select('*')
-        .limit(limit);
-      
-      if (error) throw error;
-      
-      const playlistData = (data || []).map((playlist: any) => ({
-        collectionId: playlist.id,
-        collectionName: playlist.title,
-        artistName: `${playlist.nb_tracks} tracks`,
-        artworkUrl100: playlist.picture_medium,
-        releaseDate: playlist.creation_date,
-      }));
-      
-      setAlbums(playlistData);
+      albumsCache[cacheKey] = { data: data.results || [], timestamp: Date.now() };
+      setAlbums(data.results || []);
       setError(null);
     } catch (err: any) {
-      console.error('Playlist fetch error:', err);
       setError(err.message);
-      setAlbums([]);
     } finally {
       setLoading(false);
     }
@@ -224,26 +197,12 @@ export function useFetchAlbumDetails(albumId: string) {
     try {
       setLoading(true);
       
-      const response = await fetch(`/api/music?type=album&query=${albumId}`);
+      const response = await fetch(`https://itunes.apple.com/lookup?id=${albumId}&entity=song`);
       const data = await response.json();
       
-      if (data && data.tracks) {
-        const albumData = {
-          collectionId: data.id,
-          collectionName: data.title,
-          artistName: data.artist.name,
-          artworkUrl100: data.cover_medium,
-          releaseDate: data.release_date,
-        };
-        
-        const tracksData = data.tracks.data.map((track: any) => ({
-          trackId: track.id,
-          trackName: track.title,
-          artistName: track.artist.name,
-          artworkUrl100: data.cover_medium,
-          trackTimeMillis: track.duration * 1000,
-          previewUrl: track.preview,
-        }));
+      if (data && data.results && data.results.length > 0) {
+        const albumData = data.results[0];
+        const tracksData = data.results.slice(1);
         
         albumsCache[cacheKey] = { 
           data: { album: albumData, tracks: tracksData }, 
@@ -265,69 +224,7 @@ export function useFetchAlbumDetails(albumId: string) {
 }
 
 export function useFetchPlaylistDetails(playlistId: string) {
-  const [album, setAlbum] = useState<any>(null);
-  const [tracks, setTracks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (playlistId) {
-      fetchPlaylistDetails();
-    }
-  }, [playlistId]);
-
-  async function fetchPlaylistDetails() {
-    const cacheKey = `playlist-${playlistId}`;
-    const cached = albumsCache[cacheKey];
-    
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      setAlbum(cached.data.album);
-      setTracks(cached.data.tracks);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const response = await fetch(`/api/music?type=playlist&query=${playlistId}`);
-      const data = await response.json();
-      
-      if (data && data.tracks) {
-        const playlistData = {
-          collectionId: data.id,
-          collectionName: data.title,
-          artistName: `${data.nb_tracks} tracks`,
-          artworkUrl100: data.picture_medium,
-          releaseDate: data.creation_date,
-        };
-        
-        const tracksData = data.tracks.data.map((track: any) => ({
-          trackId: track.id,
-          trackName: track.title,
-          artistName: track.artist.name,
-          artworkUrl100: track.album.cover_medium,
-          trackTimeMillis: track.duration * 1000,
-          previewUrl: track.preview,
-        }));
-        
-        albumsCache[cacheKey] = { 
-          data: { album: playlistData, tracks: tracksData }, 
-          timestamp: Date.now() 
-        };
-        setAlbum(playlistData);
-        setTracks(tracksData);
-      }
-      
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return { album, tracks, loading, error };
+  return useFetchAlbumDetails(playlistId);
 }
 
 export function useSearchTracks() {
@@ -335,7 +232,7 @@ export function useSearchTracks() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function search(query: string, limit = 20) {
+  async function search(query: string, limit = 15) {
     if (!query.trim()) {
       setTracks([]);
       return;
@@ -344,18 +241,10 @@ export function useSearchTracks() {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/music?type=search-track&query=${encodeURIComponent(query)}&limit=${limit}`
+        `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=${limit}`
       );
       const data = await response.json();
-      const tracksData = (data.data || []).map((track: any) => ({
-        trackId: track.id,
-        trackName: track.title,
-        artistName: track.artist.name,
-        artworkUrl100: track.album.cover_medium,
-        trackTimeMillis: track.duration * 1000,
-        previewUrl: track.preview,
-      }));
-      setTracks(tracksData);
+      setTracks(data.results || []);
       setError(null);
     } catch (err: any) {
       setError(err.message);

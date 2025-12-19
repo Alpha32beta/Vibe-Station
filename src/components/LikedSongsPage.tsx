@@ -5,6 +5,7 @@ import { useMusic } from '@/context/MusicContext';
 import { usePlayer } from '@/context/PlayerContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import Navbar from './Navbar';
 
 const LikedSongsPage = () => {
   const { likedSongs, toggleLike } = useMusic();
@@ -64,6 +65,7 @@ const LikedSongsPage = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-purple-900/40 to-spotify-black">
+      <Navbar />
       <div className="p-8">
         <button
           onClick={() => router.back()}

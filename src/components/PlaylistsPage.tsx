@@ -5,6 +5,7 @@ import { useMusic } from '@/context/MusicContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navbar from './Navbar';
 
 const PlaylistsPage = () => {
   const { playlists, createPlaylist, deletePlaylist, refreshData } = useMusic();
@@ -56,6 +57,7 @@ const PlaylistsPage = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-b from-spotify-gray to-spotify-black">
+      <Navbar />
       <div className="p-4 md:p-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white">Your Playlists</h1>

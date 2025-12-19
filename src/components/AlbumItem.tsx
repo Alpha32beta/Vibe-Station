@@ -30,7 +30,8 @@ const AlbumItem = ({ album }: any) => {
     try {
       console.log('Fetching album tracks for ID:', album.collectionId);
       
-      const response = await fetch(`/api/music?type=album&query=${album.collectionId}`);
+      // Use iTunes API
+      const response = await fetch(`https://itunes.apple.com/lookup?id=${album.collectionId}&entity=song`);
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -39,21 +40,22 @@ const AlbumItem = ({ album }: any) => {
       const data = await response.json();
       console.log('Album data received:', data);
       
-      if (data && data.tracks && data.tracks.data && data.tracks.data.length > 0) {
-        const tracks = data.tracks.data
+      if (data && data.results && data.results.length > 1) {
+        // First result is the album, rest are tracks
+        const tracks = data.results
+          .slice(1) // Skip first item (album info)
           .map((track: any) => ({
-            trackId: track.id,
-            trackName: track.title,
-            artistName: track.artist?.name || album.artistName,
-            artworkUrl100: track.album?.cover_medium || album.artworkUrl100,
-            previewUrl: track.preview || '',
-            trackTimeMillis: track.duration ? track.duration * 1000 : 30000,
-            collectionName: album.collectionName,
+            trackId: track.trackId,
+            trackName: track.trackName,
+            artistName: track.artistName,
+            artworkUrl100: track.artworkUrl100,
+            previewUrl: track.previewUrl || '',
+            trackTimeMillis: track.trackTimeMillis,
+            collectionName: track.collectionName,
           }))
           .filter((track: Track) => track.previewUrl !== ''); 
         
         console.log('Processed tracks:', tracks);
-        console.log('Track preview URLs:', tracks.map((t: Track) => t.previewUrl));
         
         if (tracks.length > 0) {
           console.log('Playing track:', tracks[0].trackName);
@@ -83,7 +85,7 @@ const AlbumItem = ({ album }: any) => {
       >
         <div className="relative mb-4">
           <img
-            src={album.artworkUrl100?.replace('100x100', '300x300') || '/placeholder.png'}
+            src={album.artworkUrl100?.replace('100x100', '600x600') || '/placeholder.png'}
             alt={album.collectionName}
             className="w-full aspect-square object-cover rounded-md shadow-lg"
             onError={(e) => {
