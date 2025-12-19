@@ -113,24 +113,20 @@ function ConfirmEmailContent() {
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2 text-green-500">Email Verified!</h2>
-              <p className="text-gray-400 mb-6">{message}</p>
-              <div className="bg-red-500/10 border border-green-500 rounded-md p-4 mb-6">
-                <p className="text-red-400 text-sm">
-                  If have any issues, please contact support.
-                </p>
-              </div>
+              <p className="text-gray-400 mb-6">Welcome to Vibe Station</p>
+             
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => router.push('/signup')}
+                  onClick={() => router.push('/login')}
                   className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3 rounded-full transition"
                 >
-                  Back to Sign Up
+                 Log In
                 </button>
                 <button
-                  onClick={() => router.push('/login')}
+                  onClick={() => router.push('/signup')}
                   className="w-full bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-3 rounded-full transition"
                 >
-                  Try Logging In
+                  Back to Sign Up
                 </button>
               </div>
             </div>
